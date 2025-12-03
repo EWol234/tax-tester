@@ -1,0 +1,3 @@
+- Be succint in all communcations with me, without sacrificing needed detail. Sacrifice proper grammar and abbreviate as needed.
+- Use the frontend-design plugin when working on frontend tasks.
+- Test all frontend changes using the Playwright MCP.

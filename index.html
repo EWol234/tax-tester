@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tax Optimization Calculator</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #059669;
+            --danger: #dc2626;
+            --warning: #d97706;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-900: #111827;
+            --border-radius: 8px;
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--gray-900);
+            background: var(--gray-50);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .disclaimer {
+            font-size: 14px;
+            color: var(--gray-600);
+            font-style: italic;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 968px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .panel h2 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--gray-200);
+        }
+
+        .form-section {
+            margin-bottom: 24px;
+        }
+
+        .form-section h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--gray-700);
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: var(--gray-700);
+        }
+
+        input[type="number"],
+        input[type="date"] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--gray-300);
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.2s;
+        }
+
+        input[type="number"]:focus,
+        input[type="date"]:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .slider-container {
+            margin: 24px 0;
+            padding: 20px;
+            background: var(--gray-50);
+            border-radius: var(--border-radius);
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .slider-value {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            background: var(--gray-300);
+            border-radius: 4px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border: 3px solid var(--primary);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: white;
+            border: 3px solid var(--primary);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+        }
+
+
+        button {
+            width: 100%;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            background: var(--primary);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: var(--primary-dark);
+        }
+
+        button:disabled {
+            background: var(--gray-300);
+            cursor: not-allowed;
+        }
+
+        .result-card {
+            margin-bottom: 16px;
+            padding: 16px;
+            background: var(--gray-50);
+            border-radius: var(--border-radius);
+            border-left: 4px solid var(--primary);
+        }
+
+        .result-card h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            font-size: 14px;
+        }
+
+        .result-row.total {
+            font-size: 16px;
+            font-weight: 700;
+            padding-top: 12px;
+            margin-top: 12px;
+            border-top: 2px solid var(--gray-300);
+        }
+
+        .total-cost {
+            background: var(--primary);
+            color: white;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .total-cost h3 {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            opacity: 0.9;
+        }
+
+        .total-cost .amount {
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .error {
+            color: var(--danger);
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        .success-message {
+            background: var(--success);
+            color: white;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .details {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--gray-300);
+        }
+
+        .details-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            font-size: 13px;
+            color: var(--gray-600);
+        }
+
+        .tax-details {
+            margin-top: 16px;
+            padding: 12px;
+            background: white;
+            border: 1px solid var(--gray-300);
+            border-radius: 6px;
+        }
+
+        .tax-details summary {
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--primary);
+            user-select: none;
+            padding: 4px 0;
+        }
+
+        .tax-details summary:hover {
+            color: var(--primary-dark);
+        }
+
+        .tax-details[open] summary {
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .breakdown {
+            font-size: 13px;
+        }
+
+        .breakdown h4 {
+            font-size: 14px;
+            font-weight: 600;
+            margin: 16px 0 8px 0;
+            color: var(--gray-700);
+        }
+
+        .breakdown h4:first-child {
+            margin-top: 0;
+        }
+
+        .breakdown-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            color: var(--gray-600);
+        }
+
+        .bracket-list {
+            margin-left: 12px;
+        }
+
+        .loading {
+            text-align: center;
+            color: var(--gray-600);
+            padding: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Tax Optimization Calculator</h1>
+            <p class="disclaimer">For educational purposes only. Consult a tax professional for actual tax advice.</p>
+        </header>
+
+        <div class="layout">
+            <!-- Input Panel -->
+            <div class="panel">
+                <h2>Inputs</h2>
+
+                <div class="form-section">
+                    <h3>Income</h3>
+                    <div class="form-group">
+                        <label for="income2025">2025 Ordinary Income ($)</label>
+                        <input type="number" id="income2025" min="0" step="1000" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="income2026">2026 Ordinary Income ($)</label>
+                        <input type="number" id="income2026" min="0" step="1000" value="0">
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Sale Dates</h3>
+                    <div class="form-group">
+                        <label for="date1">Sale Date (2025)</label>
+                        <input type="date" id="date1" value="2025-12-15">
+                    </div>
+                    <div class="info-display" style="padding: 12px; background: var(--gray-100); border-radius: 6px; font-size: 14px;">
+                        <strong>Second Sale Date:</strong> January 2, 2026 (First business day of 2026)
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Shares & Pricing</h3>
+                    <div class="form-group">
+                        <label for="totalShares">Total Shares to Sell</label>
+                        <input type="number" id="totalShares" min="1" step="1" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="costBasis">Cost Basis per Share ($)</label>
+                        <input type="number" id="costBasis" min="0" step="0.01" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="currentPrice">Current Price per Share ($)</label>
+                        <input type="number" id="currentPrice" min="0" step="0.01" value="0">
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Debt</h3>
+                    <div class="form-group">
+                        <label for="totalDebt">Total Debt Amount ($)</label>
+                        <input type="number" id="totalDebt" min="0" step="1000" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="interestRate">Annual Interest Rate (APR %)</label>
+                        <input type="number" id="interestRate" min="0" max="100" step="0.1" value="0">
+                    </div>
+                </div>
+
+                <div class="slider-container">
+                    <div class="slider-label">
+                        <span>Share Split</span>
+                    </div>
+                    <input type="range" id="shareSlider" min="0" max="100" value="0">
+                    <div class="share-inputs" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="shares2025Input" style="font-size: 12px;">2025 Shares</label>
+                            <input type="number" id="shares2025Input" min="0" step="1" value="0"
+                                   style="padding: 8px; font-size: 14px;">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="shares2026Input" style="font-size: 12px;">2026 Shares</label>
+                            <input type="number" id="shares2026Input" min="0" step="1" value="0"
+                                   style="padding: 8px; font-size: 14px;">
+                        </div>
+                    </div>
+                    <div id="shareValidationError" class="error" style="margin-top: 8px; display: none; font-size: 12px;"></div>
+                </div>
+
+                <button id="optimizeBtn">Auto-Optimize</button>
+            </div>
+
+            <!-- Results Panel -->
+            <div class="panel">
+                <h2>Results</h2>
+                <div id="successMessage" class="success-message hidden"></div>
+                <div id="results">
+                    <div class="loading">Enter values to see tax calculations</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Savings Analysis Chart -->
+        <div class="panel" style="margin-top: 24px;">
+            <h2>Savings Analysis Chart</h2>
+            <div style="position: relative; height: 400px;">
+                <canvas id="costChart"></canvas>
+            </div>
+            <div style="margin-top: 12px; font-size: 13px; color: var(--gray-600); text-align: center;">
+                X-axis: Shares sold in 2026 | Y-axis: Total savings (Tax Savings - Interest)
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tax Bracket Constants
+        const TAX_DATA = {
+            2025: {
+                federal: {
+                    standardDeduction: 14600,
+                    brackets: [
+                        { max: 11600, rate: 0.10 },
+                        { max: 47150, rate: 0.12 },
+                        { max: 100525, rate: 0.22 },
+                        { max: 191950, rate: 0.24 },
+                        { max: 243725, rate: 0.32 },
+                        { max: 609350, rate: 0.35 },
+                        { max: Infinity, rate: 0.37 }
+                    ],
+                    ltcgBrackets: [
+                        { max: 47025, rate: 0.00 },
+                        { max: 518900, rate: 0.15 },
+                        { max: Infinity, rate: 0.20 }
+                    ]
+                },
+                california: {
+                    standardDeduction: 5363,
+                    mentalHealthThreshold: 1000000,
+                    mentalHealthRate: 0.01,
+                    brackets: [
+                        { max: 10412, rate: 0.01 },
+                        { max: 24684, rate: 0.02 },
+                        { max: 38959, rate: 0.04 },
+                        { max: 54081, rate: 0.06 },
+                        { max: 68350, rate: 0.08 },
+                        { max: 349137, rate: 0.093 },
+                        { max: 418961, rate: 0.103 },
+                        { max: 698271, rate: 0.113 },
+                        { max: Infinity, rate: 0.123 }
+                    ]
+                }
+            },
+            2026: {
+                federal: {
+                    standardDeduction: 15038, // ~3% inflation
+                    brackets: [
+                        { max: 11948, rate: 0.10 },
+                        { max: 48565, rate: 0.12 },
+                        { max: 103541, rate: 0.22 },
+                        { max: 197709, rate: 0.24 },
+                        { max: 251037, rate: 0.32 },
+                        { max: 627631, rate: 0.35 },
+                        { max: Infinity, rate: 0.37 }
+                    ],
+                    ltcgBrackets: [
+                        { max: 48436, rate: 0.00 },
+                        { max: 534467, rate: 0.15 },
+                        { max: Infinity, rate: 0.20 }
+                    ]
+                },
+                california: {
+                    standardDeduction: 5524, // ~3% inflation
+                    mentalHealthThreshold: 1030000,
+                    mentalHealthRate: 0.01,
+                    brackets: [
+                        { max: 10724, rate: 0.01 },
+                        { max: 25425, rate: 0.02 },
+                        { max: 40128, rate: 0.04 },
+                        { max: 55703, rate: 0.06 },
+                        { max: 70401, rate: 0.08 },
+                        { max: 359611, rate: 0.093 },
+                        { max: 431530, rate: 0.103 },
+                        { max: 719219, rate: 0.113 },
+                        { max: Infinity, rate: 0.123 }
+                    ]
+                }
+            }
+        };
+
+        // Progressive Tax Calculation
+        function calculateProgressiveTax(income, brackets) {
+            let tax = 0;
+            let previousMax = 0;
+
+            for (const bracket of brackets) {
+                const taxableInBracket = Math.min(income, bracket.max) - previousMax;
+                if (taxableInBracket <= 0) break;
+                tax += taxableInBracket * bracket.rate;
+                previousMax = bracket.max;
+                if (income <= bracket.max) break;
+            }
+
+            return tax;
+        }
+
+        // Federal Income Tax
+        function calculateFederalIncomeTax(ordinaryIncome, federalDeduction, year) {
+            const taxableIncome = Math.max(0, ordinaryIncome - federalDeduction);
+            return calculateProgressiveTax(taxableIncome, TAX_DATA[year].federal.brackets);
+        }
+
+        // Federal LTCG Tax (rate based on total income)
+        function calculateLTCGTax(capitalGains, ordinaryIncome, federalDeduction, year) {
+            if (capitalGains <= 0) return 0;
+
+            const taxableOrdinaryIncome = Math.max(0, ordinaryIncome - federalDeduction);
+            const totalIncome = taxableOrdinaryIncome + capitalGains;
+
+            // Find rate based on total income
+            let rate = 0;
+            for (const bracket of TAX_DATA[year].federal.ltcgBrackets) {
+                rate = bracket.rate;
+                if (totalIncome <= bracket.max) {
+                    break;
+                }
+            }
+
+            return capitalGains * rate;
+        }
+
+        // California State Tax
+        function calculateCAStateTax(ordinaryIncome, capitalGains, year) {
+            const taxableIncome = Math.max(0, ordinaryIncome + capitalGains - TAX_DATA[year].california.standardDeduction);
+            let tax = calculateProgressiveTax(taxableIncome, TAX_DATA[year].california.brackets);
+
+            // Mental Health Services Tax
+            const totalIncome = ordinaryIncome + capitalGains;
+            if (totalIncome > TAX_DATA[year].california.mentalHealthThreshold) {
+                const excessIncome = totalIncome - TAX_DATA[year].california.mentalHealthThreshold;
+                tax += excessIncome * TAX_DATA[year].california.mentalHealthRate;
+            }
+
+            return tax;
+        }
+
+        // Total Tax with SALT Optimization
+        function calculateTotalTax(ordinaryIncome, capitalGains, year) {
+            // CA tax (always calculated first)
+            const caTax = calculateCAStateTax(ordinaryIncome, capitalGains, year);
+
+            // Determine federal deduction (standard vs SALT)
+            const standardDeduction = TAX_DATA[year].federal.standardDeduction;
+            const saltDeduction = Math.min(caTax, 10000);
+            const federalDeduction = Math.max(standardDeduction, saltDeduction);
+            const usedSALT = federalDeduction === saltDeduction;
+
+            // Federal taxes
+            const federalIncomeTax = calculateFederalIncomeTax(ordinaryIncome, federalDeduction, year);
+            const federalLTCGTax = calculateLTCGTax(capitalGains, ordinaryIncome, federalDeduction, year);
+
+            return {
+                caTax,
+                federalIncomeTax,
+                federalLTCGTax,
+                totalTax: caTax + federalIncomeTax + federalLTCGTax,
+                usedSALT,
+                federalDeduction
+            };
+        }
+
+        // Generate Federal Income Tax Breakdown
+        function generateFederalIncomeBreakdown(ordinaryIncome, federalDeduction, year) {
+            const taxableIncome = Math.max(0, ordinaryIncome - federalDeduction);
+            let html = `<div class="breakdown-row"><strong>Ordinary Income:</strong> <span>${formatCurrency(ordinaryIncome)}</span></div>`;
+            html += `<div class="breakdown-row"><strong>Deduction:</strong> <span>-${formatCurrency(federalDeduction)}</span></div>`;
+            html += `<div class="breakdown-row"><strong>Taxable Income:</strong> <span>${formatCurrency(taxableIncome)}</span></div>`;
+
+            if (taxableIncome > 0) {
+                html += `<div class="bracket-list" style="margin-top: 8px;">`;
+                let previousMax = 0;
+                for (const bracket of TAX_DATA[year].federal.brackets) {
+                    const taxableInBracket = Math.min(taxableIncome, bracket.max) - previousMax;
+                    if (taxableInBracket <= 0) break;
+                    const tax = taxableInBracket * bracket.rate;
+                    const ratePercent = (bracket.rate * 100).toFixed(0);
+                    html += `<div class="breakdown-row">`;
+                    html += `<span>${formatCurrency(previousMax)} - ${bracket.max === Infinity ? '∞' : formatCurrency(bracket.max)} @ ${ratePercent}%:</span>`;
+                    html += `<span>${formatCurrency(tax)}</span>`;
+                    html += `</div>`;
+                    previousMax = bracket.max;
+                    if (taxableIncome <= bracket.max) break;
+                }
+                html += `</div>`;
+            }
+            return html;
+        }
+
+        // Generate LTCG Breakdown
+        function generateLTCGBreakdown(capitalGains, ordinaryIncome, federalDeduction, year) {
+            if (capitalGains <= 0) return '<div class="breakdown-row"><strong>No capital gains</strong></div>';
+
+            const taxableOrdinaryIncome = Math.max(0, ordinaryIncome - federalDeduction);
+            const totalIncome = taxableOrdinaryIncome + capitalGains;
+
+            // Find rate
+            let rate = 0;
+            for (const bracket of TAX_DATA[year].federal.ltcgBrackets) {
+                rate = bracket.rate;
+                if (totalIncome <= bracket.max) break;
+            }
+
+            const ratePercent = (rate * 100).toFixed(0);
+            let html = `<div class="breakdown-row"><strong>Capital Gains:</strong> <span>${formatCurrency(capitalGains)}</span></div>`;
+            html += `<div class="breakdown-row"><strong>Taxable Ordinary Income:</strong> <span>${formatCurrency(taxableOrdinaryIncome)}</span></div>`;
+            html += `<div class="breakdown-row"><strong>Total Income:</strong> <span>${formatCurrency(totalIncome)}</span></div>`;
+            html += `<div class="breakdown-row"><strong>Rate Applied:</strong> <span>${ratePercent}%</span></div>`;
+            html += `<div class="breakdown-row"><strong>LTCG Tax:</strong> <span>${formatCurrency(capitalGains * rate)}</span></div>`;
+            return html;
+        }
+
+        // Generate CA State Tax Breakdown
+        function generateCABreakdown(ordinaryIncome, capitalGains, year) {
+            const totalIncome = ordinaryIncome + capitalGains;
+            const deduction = TAX_DATA[year].california.standardDeduction;
+            const taxableIncome = Math.max(0, totalIncome - deduction);
+
+            let html = `<div class="breakdown-row"><strong>Total Income:</strong> <span>${formatCurrency(totalIncome)}</span></div>`;
+            html += `<div class="breakdown-row"><strong>Standard Deduction:</strong> <span>-${formatCurrency(deduction)}</span></div>`;
+            html += `<div class="breakdown-row"><strong>Taxable Income:</strong> <span>${formatCurrency(taxableIncome)}</span></div>`;
+
+            if (taxableIncome > 0) {
+                html += `<div class="bracket-list" style="margin-top: 8px;">`;
+                let previousMax = 0;
+                for (const bracket of TAX_DATA[year].california.brackets) {
+                    const taxableInBracket = Math.min(taxableIncome, bracket.max) - previousMax;
+                    if (taxableInBracket <= 0) break;
+                    const tax = taxableInBracket * bracket.rate;
+                    const ratePercent = (bracket.rate * 100).toFixed(1);
+                    html += `<div class="breakdown-row">`;
+                    html += `<span>${formatCurrency(previousMax)} - ${bracket.max === Infinity ? '∞' : formatCurrency(bracket.max)} @ ${ratePercent}%:</span>`;
+                    html += `<span>${formatCurrency(tax)}</span>`;
+                    html += `</div>`;
+                    previousMax = bracket.max;
+                    if (taxableIncome <= bracket.max) break;
+                }
+                html += `</div>`;
+            }
+
+            // Mental Health Tax
+            if (totalIncome > TAX_DATA[year].california.mentalHealthThreshold) {
+                const excessIncome = totalIncome - TAX_DATA[year].california.mentalHealthThreshold;
+                const mentalHealthTax = excessIncome * TAX_DATA[year].california.mentalHealthRate;
+                html += `<div style="margin-top: 8px;">`;
+                html += `<div class="breakdown-row"><strong>Mental Health Services Tax (1%):</strong></div>`;
+                html += `<div class="breakdown-row" style="margin-left: 12px;">`;
+                html += `<span>Income over ${formatCurrency(TAX_DATA[year].california.mentalHealthThreshold)}:</span>`;
+                html += `<span>${formatCurrency(mentalHealthTax)}</span>`;
+                html += `</div>`;
+                html += `</div>`;
+            }
+
+            return html;
+        }
+
+        // Interest Calculation
+        function calculateInterest(debt, apr, days) {
+            if (debt <= 0 || apr <= 0 || days <= 0) return 0;
+            return debt * (apr / 100) * (days / 365);
+        }
+
+        // Total Cost Calculation
+        function calculateTotalCost(sharesSoldYear1, inputs) {
+            const sharesYear2 = inputs.totalShares - sharesSoldYear1;
+
+            // Capital gains
+            const gainPerShare = inputs.currentPrice - inputs.costBasis;
+            const gainsYear1 = sharesSoldYear1 * gainPerShare;
+            const gainsYear2 = sharesYear2 * gainPerShare;
+
+            // Year 1 tax (2025)
+            const tax1 = calculateTotalTax(inputs.income2025, gainsYear1, 2025);
+
+            // Year 2 tax (2026)
+            const tax2 = calculateTotalTax(inputs.income2026, gainsYear2, 2026);
+
+            // Interest calculation
+            const proceedsYear1 = sharesSoldYear1 * inputs.currentPrice;
+            const proceedsYear2 = sharesYear2 * inputs.currentPrice;
+            const remainingDebt = Math.max(0, inputs.totalDebt - proceedsYear1);
+            const interestBase = Math.min(proceedsYear2, remainingDebt);
+            const interestCost = calculateInterest(interestBase, inputs.interestRate, inputs.daysBetween);
+
+            // Baseline: all shares sold in 2025
+            const totalGains = inputs.totalShares * gainPerShare;
+            const baselineTax2025 = calculateTotalTax(inputs.income2025, totalGains, 2025);
+            const baselineTax2026 = calculateTotalTax(inputs.income2026, 0, 2026);
+            const baselineCost = baselineTax2025.totalTax + baselineTax2026.totalTax;
+
+            // Tax savings (positive means splitting saves money)
+            const currentTax = tax1.totalTax + tax2.totalTax;
+            const taxSavings = baselineCost - currentTax;
+
+            // Total cost = interest cost - tax savings
+            const totalCost = interestCost - taxSavings;
+
+            // Total savings = tax savings - interest cost (inverse of cost)
+            const totalSavings = -totalCost;
+
+            return {
+                sharesSoldYear1,
+                sharesYear2,
+                gainsYear1,
+                gainsYear2,
+                tax1,
+                tax2,
+                interestCost,
+                baselineCost,
+                taxSavings,
+                totalCost,
+                totalSavings,
+                proceedsYear1,
+                remainingDebt
+            };
+        }
+
+        // Optimization Algorithm
+        function optimizeShareSplit(inputs) {
+            if (inputs.totalShares <= 0) return null;
+
+            let bestSplit = 0;
+            let minCost = Infinity;
+
+            // Brute force search
+            for (let shares1 = 0; shares1 <= inputs.totalShares; shares1++) {
+                const result = calculateTotalCost(shares1, inputs);
+                if (result.totalCost < minCost) {
+                    minCost = result.totalCost;
+                    bestSplit = shares1;
+                }
+            }
+
+            return calculateTotalCost(bestSplit, inputs);
+        }
+
+        // Input Gathering
+        function gatherInputs() {
+            const date1 = new Date(document.getElementById('date1').value);
+            const date2 = new Date('2026-01-02'); // First business day of 2026
+            const daysBetween = Math.max(0, (date2 - date1) / (1000 * 60 * 60 * 24));
+
+            return {
+                income2025: parseFloat(document.getElementById('income2025').value) || 0,
+                income2026: parseFloat(document.getElementById('income2026').value) || 0,
+                totalShares: parseInt(document.getElementById('totalShares').value) || 0,
+                costBasis: parseFloat(document.getElementById('costBasis').value) || 0,
+                currentPrice: parseFloat(document.getElementById('currentPrice').value) || 0,
+                totalDebt: parseFloat(document.getElementById('totalDebt').value) || 0,
+                interestRate: parseFloat(document.getElementById('interestRate').value) || 0,
+                daysBetween,
+                date1,
+                date2
+            };
+        }
+
+        // Format Currency
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(amount);
+        }
+
+        // Display Results
+        function displayResults(result) {
+            if (!result) {
+                document.getElementById('results').innerHTML = '<div class="loading">Enter valid values to see calculations</div>';
+                return;
+            }
+
+            const inputs = gatherInputs();
+
+            const html = `
+                <div class="result-card">
+                    <h3>2025 Tax Breakdown</h3>
+                    <div class="result-row">
+                        <span>Shares Sold:</span>
+                        <strong>${result.sharesSoldYear1.toLocaleString()}</strong>
+                    </div>
+                    <div class="result-row">
+                        <span>Capital Gains:</span>
+                        <strong>${formatCurrency(result.gainsYear1)}</strong>
+                    </div>
+                    <div class="details">
+                        <div class="details-row">
+                            <span>Federal Income Tax:</span>
+                            <span>${formatCurrency(result.tax1.federalIncomeTax)}</span>
+                        </div>
+                        <div class="details-row">
+                            <span>Federal LTCG Tax:</span>
+                            <span>${formatCurrency(result.tax1.federalLTCGTax)}</span>
+                        </div>
+                        <div class="details-row">
+                            <span>CA State Tax:</span>
+                            <span>${formatCurrency(result.tax1.caTax)}</span>
+                        </div>
+                        <div class="details-row">
+                            <span>Deduction Used:</span>
+                            <span>${result.tax1.usedSALT ? 'SALT' : 'Standard'} (${formatCurrency(result.tax1.federalDeduction)})</span>
+                        </div>
+                    </div>
+                    <details class="tax-details">
+                        <summary>Show detailed calculation</summary>
+                        <div class="breakdown">
+                            <h4>Federal Income Tax</h4>
+                            ${generateFederalIncomeBreakdown(inputs.income2025, result.tax1.federalDeduction, 2025)}
+                            <h4>Federal LTCG Tax</h4>
+                            ${generateLTCGBreakdown(result.gainsYear1, inputs.income2025, result.tax1.federalDeduction, 2025)}
+                            <h4>California State Tax</h4>
+                            ${generateCABreakdown(inputs.income2025, result.gainsYear1, 2025)}
+                        </div>
+                    </details>
+                    <div class="result-row total">
+                        <span>Total 2025 Tax:</span>
+                        <strong>${formatCurrency(result.tax1.totalTax)}</strong>
+                    </div>
+                </div>
+
+                <div class="result-card">
+                    <h3>2026 Tax Breakdown</h3>
+                    <div class="result-row">
+                        <span>Shares Sold:</span>
+                        <strong>${result.sharesYear2.toLocaleString()}</strong>
+                    </div>
+                    <div class="result-row">
+                        <span>Capital Gains:</span>
+                        <strong>${formatCurrency(result.gainsYear2)}</strong>
+                    </div>
+                    <div class="details">
+                        <div class="details-row">
+                            <span>Federal Income Tax:</span>
+                            <span>${formatCurrency(result.tax2.federalIncomeTax)}</span>
+                        </div>
+                        <div class="details-row">
+                            <span>Federal LTCG Tax:</span>
+                            <span>${formatCurrency(result.tax2.federalLTCGTax)}</span>
+                        </div>
+                        <div class="details-row">
+                            <span>CA State Tax:</span>
+                            <span>${formatCurrency(result.tax2.caTax)}</span>
+                        </div>
+                        <div class="details-row">
+                            <span>Deduction Used:</span>
+                            <span>${result.tax2.usedSALT ? 'SALT' : 'Standard'} (${formatCurrency(result.tax2.federalDeduction)})</span>
+                        </div>
+                    </div>
+                    <details class="tax-details">
+                        <summary>Show detailed calculation</summary>
+                        <div class="breakdown">
+                            <h4>Federal Income Tax</h4>
+                            ${generateFederalIncomeBreakdown(inputs.income2026, result.tax2.federalDeduction, 2026)}
+                            <h4>Federal LTCG Tax</h4>
+                            ${generateLTCGBreakdown(result.gainsYear2, inputs.income2026, result.tax2.federalDeduction, 2026)}
+                            <h4>California State Tax</h4>
+                            ${generateCABreakdown(inputs.income2026, result.gainsYear2, 2026)}
+                        </div>
+                    </details>
+                    <div class="result-row total">
+                        <span>Total 2026 Tax:</span>
+                        <strong>${formatCurrency(result.tax2.totalTax)}</strong>
+                    </div>
+                </div>
+
+                <div class="result-card">
+                    <h3>Interest Cost</h3>
+                    <div class="result-row">
+                        <span>Remaining Debt:</span>
+                        <strong>${formatCurrency(result.remainingDebt)}</strong>
+                    </div>
+                    <div class="result-row total">
+                        <span>Interest Accrued:</span>
+                        <strong>${formatCurrency(result.interestCost)}</strong>
+                    </div>
+                </div>
+
+                <div class="result-card" style="border-left-color: var(--primary);">
+                    <h3>Total Savings Breakdown</h3>
+                    <div class="result-row">
+                        <span>Baseline (All in 2025):</span>
+                        <strong>${formatCurrency(result.baselineCost)}</strong>
+                    </div>
+                    <div class="result-row">
+                        <span>Current Tax (Split):</span>
+                        <strong>${formatCurrency(result.tax1.totalTax + result.tax2.totalTax)}</strong>
+                    </div>
+                    <div class="result-row" style="color: ${result.taxSavings >= 0 ? 'var(--success)' : 'var(--danger)'}; font-weight: 600;">
+                        <span>Tax ${result.taxSavings >= 0 ? 'Savings' : 'Cost'} from Splitting:</span>
+                        <strong>${result.taxSavings >= 0 ? '+' : '-'}${formatCurrency(Math.abs(result.taxSavings))}</strong>
+                    </div>
+                    <div class="result-row" style="color: var(--danger); font-weight: 600;">
+                        <span>Interest Cost from Waiting:</span>
+                        <strong>-${formatCurrency(result.interestCost)}</strong>
+                    </div>
+                    <div class="result-row total">
+                        <span>Net Savings:</span>
+                        <strong style="color: ${result.totalSavings >= 0 ? 'var(--success)' : 'var(--danger)'};">${result.totalSavings >= 0 ? '+' : ''}${formatCurrency(result.totalSavings)}</strong>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('results').innerHTML = html;
+        }
+
+        // Update Results
+        function updateResults() {
+            const inputs = gatherInputs();
+            const slider = document.getElementById('shareSlider');
+            const sharesYear2 = parseInt(slider.value); // Direct share value
+            const sharesSoldYear1 = inputs.totalShares - sharesYear2;
+
+            const result = calculateTotalCost(sharesSoldYear1, inputs);
+            displayResults(result);
+            updateChart();
+        }
+
+        // Update Slider Display
+        function updateSliderDisplay() {
+            const inputs = gatherInputs();
+            const slider = document.getElementById('shareSlider');
+
+            // Update slider max to match totalShares
+            slider.max = inputs.totalShares;
+            slider.step = 1; // Always work in shares, not percentages
+
+            // Ensure slider value doesn't exceed new max
+            if (parseInt(slider.value) > inputs.totalShares) {
+                slider.value = inputs.totalShares;
+            }
+
+            const sharesYear2 = parseInt(slider.value);
+            const sharesSoldYear1 = inputs.totalShares - sharesYear2;
+
+            // Update input boxes (sync from slider)
+            document.getElementById('shares2025Input').value = sharesSoldYear1;
+            document.getElementById('shares2026Input').value = sharesYear2;
+
+            // Hide validation error when slider is used
+            document.getElementById('shareValidationError').style.display = 'none';
+        }
+
+        // Show Success Message
+        function showSuccessMessage(shares) {
+            const msg = document.getElementById('successMessage');
+            msg.textContent = `Optimal split found: ${shares.toLocaleString()} shares in 2025`;
+            msg.classList.remove('hidden');
+            setTimeout(() => msg.classList.add('hidden'), 5000);
+        }
+
+        // Event Listeners
+        let debounceTimer;
+        document.querySelectorAll('input[type="number"], input[type="date"]').forEach(input => {
+            input.addEventListener('input', () => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    updateSliderDisplay();
+                    updateResults();
+                }, 200);
+            });
+        });
+
+        document.getElementById('shareSlider').addEventListener('input', () => {
+            updateSliderDisplay();
+            updateResults();
+        });
+
+        document.getElementById('optimizeBtn').addEventListener('click', () => {
+            const btn = document.getElementById('optimizeBtn');
+            btn.disabled = true;
+            btn.textContent = 'Optimizing...';
+
+            setTimeout(() => {
+                const inputs = gatherInputs();
+                const optimal = optimizeShareSplit(inputs);
+
+                if (optimal) {
+                    // Set slider directly to year 2 shares (not percentage)
+                    const slider = document.getElementById('shareSlider');
+                    slider.value = optimal.sharesYear2;
+
+                    // Trigger visual update
+                    updateSliderDisplay();
+                    updateResults();
+                    showSuccessMessage(optimal.sharesSoldYear1);
+                }
+
+                btn.disabled = false;
+                btn.textContent = 'Auto-Optimize';
+            }, 100);
+        });
+
+        // Validate and sync share inputs
+        function validateAndSyncShareInputs() {
+            const inputs = gatherInputs();
+            const shares2025Input = document.getElementById('shares2025Input');
+            const shares2026Input = document.getElementById('shares2026Input');
+            const slider = document.getElementById('shareSlider');
+            const errorDiv = document.getElementById('shareValidationError');
+
+            const shares2025 = parseInt(shares2025Input.value) || 0;
+            const shares2026 = parseInt(shares2026Input.value) || 0;
+            const total = shares2025 + shares2026;
+
+            // Validate sum
+            if (total !== inputs.totalShares) {
+                errorDiv.textContent = `Shares must sum to ${inputs.totalShares.toLocaleString()} (currently ${total.toLocaleString()})`;
+                errorDiv.style.display = 'block';
+                return false;
+            }
+
+            // Valid - hide error
+            errorDiv.style.display = 'none';
+
+            // Sync to slider (slider represents year 2 shares)
+            slider.value = shares2026;
+
+            // Update display
+            document.getElementById('shares2025').textContent = shares2025.toLocaleString();
+            document.getElementById('shares2026').textContent = shares2026.toLocaleString();
+
+            // Update results
+            updateResults();
+
+            return true;
+        }
+
+        // Auto-fill the complementary input
+        function autoFillComplementaryShares(changedInputId) {
+            const inputs = gatherInputs();
+            const shares2025Input = document.getElementById('shares2025Input');
+            const shares2026Input = document.getElementById('shares2026Input');
+
+            if (changedInputId === 'shares2025Input') {
+                const shares2025 = parseInt(shares2025Input.value) || 0;
+                shares2026Input.value = Math.max(0, inputs.totalShares - shares2025);
+            } else {
+                const shares2026 = parseInt(shares2026Input.value) || 0;
+                shares2025Input.value = Math.max(0, inputs.totalShares - shares2026);
+            }
+
+            validateAndSyncShareInputs();
+        }
+
+        // Event listeners for share inputs
+        document.getElementById('shares2025Input').addEventListener('input', () => {
+            autoFillComplementaryShares('shares2025Input');
+        });
+
+        document.getElementById('shares2026Input').addEventListener('input', () => {
+            autoFillComplementaryShares('shares2026Input');
+        });
+
+        // Chart management
+        let costChart = null;
+
+        function updateChart() {
+            const inputs = gatherInputs();
+
+            // Don't render if no shares to sell
+            if (inputs.totalShares <= 0) {
+                if (costChart) {
+                    costChart.destroy();
+                    costChart = null;
+                }
+                return;
+            }
+
+            // Generate data points
+            const dataPoints = [];
+            const labels = [];
+
+            for (let sharesYear2 = 0; sharesYear2 <= inputs.totalShares; sharesYear2++) {
+                const sharesYear1 = inputs.totalShares - sharesYear2;
+                const result = calculateTotalCost(sharesYear1, inputs);
+
+                labels.push(sharesYear2);
+                dataPoints.push(result.totalSavings);
+            }
+
+            // Find maximum savings for highlighting
+            const maxSavings = Math.max(...dataPoints);
+            const maxIndex = dataPoints.indexOf(maxSavings);
+
+            // Point colors: highlight optimal point in green
+            const pointColors = dataPoints.map((savings, idx) =>
+                idx === maxIndex ? 'rgb(34, 197, 94)' : 'rgba(37, 99, 235, 0.5)'
+            );
+            const pointRadii = dataPoints.map((savings, idx) =>
+                idx === maxIndex ? 6 : 3
+            );
+
+            const ctx = document.getElementById('costChart').getContext('2d');
+
+            // Destroy existing chart
+            if (costChart) {
+                costChart.destroy();
+            }
+
+            // Create new chart
+            costChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Total Savings',
+                        data: dataPoints,
+                        borderColor: 'rgb(37, 99, 235)',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: pointColors,
+                        pointBorderColor: pointColors,
+                        pointRadius: pointRadii,
+                        pointHoverRadius: 8,
+                        tension: 0.1,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                title: function(context) {
+                                    return `Shares in 2026: ${context[0].label}`;
+                                },
+                                label: function(context) {
+                                    const sharesYear1 = inputs.totalShares - context.parsed.x;
+                                    const value = context.parsed.y;
+                                    return [
+                                        `2025: ${sharesYear1.toLocaleString()} shares`,
+                                        `Total Savings: ${value >= 0 ? '+' : ''}${formatCurrency(value)}`
+                                    ];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Shares Sold in 2026',
+                                font: {
+                                    size: 14,
+                                    weight: '600'
+                                }
+                            },
+                            ticks: {
+                                maxTicksLimit: 20
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Total Savings ($)',
+                                font: {
+                                    size: 14,
+                                    weight: '600'
+                                }
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return (value >= 0 ? '+$' : '-$') + Math.abs(value).toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize
+        updateSliderDisplay();
+        updateResults();
+        updateChart();
+    </script>
+</body>
+</html>
