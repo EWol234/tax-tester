@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tax Optimization Calculator</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
         :root {
             --primary: #2563eb;
@@ -444,7 +444,7 @@
         <div class="panel" style="margin-top: 24px;">
             <h2>Savings Analysis Chart</h2>
             <div style="position: relative; height: 400px;">
-                <canvas id="costChart"></canvas>
+                <svg id="costChart" style="width: 100%; height: 100%;"></svg>
             </div>
             <div style="margin-top: 12px; font-size: 13px; color: var(--gray-600); text-align: center;">
                 X-axis: Shares sold in 2026 | Y-axis: Total savings (Tax Savings - Interest)
@@ -1101,17 +1101,12 @@
         });
 
         // Chart management
-        let costChart = null;
-
         function updateChart() {
             const inputs = gatherInputs();
 
             // Don't render if no shares to sell
             if (inputs.totalShares <= 0) {
-                if (costChart) {
-                    costChart.destroy();
-                    costChart = null;
-                }
+                d3.select('#costChart').selectAll('*').remove();
                 return;
             }
 
@@ -1131,95 +1126,140 @@
             const maxSavings = Math.max(...dataPoints);
             const maxIndex = dataPoints.indexOf(maxSavings);
 
-            // Point colors: highlight optimal point in green
-            const pointColors = dataPoints.map((savings, idx) =>
-                idx === maxIndex ? 'rgb(34, 197, 94)' : 'rgba(37, 99, 235, 0.5)'
-            );
-            const pointRadii = dataPoints.map((savings, idx) =>
-                idx === maxIndex ? 6 : 3
-            );
+            // Setup SVG
+            const svg = d3.select('#costChart');
+            svg.selectAll('*').remove();
 
-            const ctx = document.getElementById('costChart').getContext('2d');
+            const container = svg.node().parentElement;
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            const margin = { top: 20, right: 20, bottom: 60, left: 60 };
+            const innerWidth = width - margin.left - margin.right;
+            const innerHeight = height - margin.top - margin.bottom;
 
-            // Destroy existing chart
-            if (costChart) {
-                costChart.destroy();
+            const g = svg.append('g')
+                .attr('transform', `translate(${margin.left},${margin.top})`);
+
+            // Scales
+            const xScale = d3.scaleLinear()
+                .domain([0, inputs.totalShares])
+                .range([0, innerWidth]);
+
+            const yScale = d3.scaleLinear()
+                .domain([Math.min(...dataPoints) * 1.1, Math.max(...dataPoints) * 1.1])
+                .range([innerHeight, 0]);
+
+            // Area fill
+            const area = d3.area()
+                .x((d, i) => xScale(i))
+                .y0(innerHeight)
+                .y1(d => yScale(d));
+
+            g.append('path')
+                .datum(dataPoints)
+                .attr('fill', 'rgba(37, 99, 235, 0.1)')
+                .attr('d', area);
+
+            // Line
+            const line = d3.line()
+                .x((d, i) => xScale(i))
+                .y(d => yScale(d));
+
+            g.append('path')
+                .datum(dataPoints)
+                .attr('fill', 'none')
+                .attr('stroke', 'rgb(37, 99, 235)')
+                .attr('stroke-width', 2)
+                .attr('d', line);
+
+            // Tooltip helper functions
+            let tooltip = d3.select('#d3-tooltip');
+            if (tooltip.empty()) {
+                tooltip = d3.select('body').append('div')
+                    .attr('id', 'd3-tooltip')
+                    .style('position', 'absolute')
+                    .style('background', 'rgba(0, 0, 0, 0.85)')
+                    .style('color', 'white')
+                    .style('padding', '8px 12px')
+                    .style('border-radius', '4px')
+                    .style('font-size', '13px')
+                    .style('pointer-events', 'none')
+                    .style('opacity', 0)
+                    .style('z-index', '1000');
             }
 
-            // Create new chart
-            costChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Total Savings',
-                        data: dataPoints,
-                        borderColor: 'rgb(37, 99, 235)',
-                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                        borderWidth: 2,
-                        pointBackgroundColor: pointColors,
-                        pointBorderColor: pointColors,
-                        pointRadius: pointRadii,
-                        pointHoverRadius: 8,
-                        tension: 0.1,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            callbacks: {
-                                title: function(context) {
-                                    return `Shares in 2026: ${context[0].label}`;
-                                },
-                                label: function(context) {
-                                    const sharesYear1 = inputs.totalShares - context.parsed.x;
-                                    const value = context.parsed.y;
-                                    return [
-                                        `2025: ${sharesYear1.toLocaleString()} shares`,
-                                        `Total Savings: ${value >= 0 ? '+' : ''}${formatCurrency(value)}`
-                                    ];
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Shares Sold in 2026',
-                                font: {
-                                    size: 14,
-                                    weight: '600'
-                                }
-                            },
-                            ticks: {
-                                maxTicksLimit: 20
-                            }
-                        },
-                        y: {
-                            title: {
-                                display: true,
-                                text: 'Total Savings ($)',
-                                font: {
-                                    size: 14,
-                                    weight: '600'
-                                }
-                            },
-                            ticks: {
-                                callback: function(value) {
-                                    return (value >= 0 ? '+$' : '-$') + Math.abs(value).toLocaleString();
-                                }
-                            }
-                        }
-                    }
-                }
-            });
+            function showTooltip(event, d, idx) {
+                const sharesYear1 = inputs.totalShares - idx;
+                tooltip.style('opacity', 1)
+                    .html(`<strong>Shares in 2026: ${idx}</strong><br/>` +
+                          `2025: ${sharesYear1.toLocaleString()} shares<br/>` +
+                          `Total Savings: ${d >= 0 ? '+' : ''}${formatCurrency(d)}`);
+            }
+
+            function moveTooltip(event) {
+                tooltip.style('left', (event.pageX + 10) + 'px')
+                       .style('top', (event.pageY - 28) + 'px');
+            }
+
+            function hideTooltip() {
+                tooltip.style('opacity', 0);
+            }
+
+            // Points
+            g.selectAll('circle')
+                .data(dataPoints)
+                .enter()
+                .append('circle')
+                .attr('cx', (d, i) => xScale(i))
+                .attr('cy', d => yScale(d))
+                .attr('r', (d, i) => i === maxIndex ? 6 : 3)
+                .attr('fill', (d, i) => i === maxIndex ? 'rgb(34, 197, 94)' : 'rgba(37, 99, 235, 0.5)')
+                .attr('stroke', (d, i) => i === maxIndex ? 'rgb(34, 197, 94)' : 'rgba(37, 99, 235, 0.5)')
+                .on('mouseenter', function(event, d) {
+                    d3.select(this).attr('r', 8);
+                    showTooltip(event, d, dataPoints.indexOf(d));
+                })
+                .on('mousemove', function(event) {
+                    moveTooltip(event);
+                })
+                .on('mouseleave', function(event, d) {
+                    const i = dataPoints.indexOf(d);
+                    d3.select(this).attr('r', i === maxIndex ? 6 : 3);
+                    hideTooltip();
+                });
+
+            // X-axis
+            const xAxis = d3.axisBottom(xScale)
+                .ticks(Math.min(20, inputs.totalShares))
+                .tickFormat(d3.format('d'));
+
+            g.append('g')
+                .attr('transform', `translate(0,${innerHeight})`)
+                .call(xAxis);
+
+            g.append('text')
+                .attr('x', innerWidth / 2)
+                .attr('y', innerHeight + 45)
+                .attr('text-anchor', 'middle')
+                .style('font-size', '14px')
+                .style('font-weight', '600')
+                .text('Shares Sold in 2026');
+
+            // Y-axis
+            const yAxis = d3.axisLeft(yScale)
+                .tickFormat(d => (d >= 0 ? '+$' : '-$') + Math.abs(d).toLocaleString());
+
+            g.append('g')
+                .call(yAxis);
+
+            g.append('text')
+                .attr('transform', 'rotate(-90)')
+                .attr('x', -innerHeight / 2)
+                .attr('y', -45)
+                .attr('text-anchor', 'middle')
+                .style('font-size', '14px')
+                .style('font-weight', '600')
+                .text('Total Savings ($)');
         }
 
         // Initialize
