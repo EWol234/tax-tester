@@ -1228,14 +1228,21 @@
                     hideTooltip();
                 });
 
-            // X-axis
+            // X-axis (responsive tick count)
+            const tickCount = Math.floor(innerWidth / 60); // ~60px per tick
+            const maxTicks = Math.min(tickCount, inputs.totalShares, 20);
             const xAxis = d3.axisBottom(xScale)
-                .ticks(Math.min(20, inputs.totalShares))
+                .ticks(maxTicks)
                 .tickFormat(d3.format('d'));
 
             g.append('g')
                 .attr('transform', `translate(0,${innerHeight})`)
-                .call(xAxis);
+                .call(xAxis)
+                .selectAll('text')
+                .style('text-anchor', innerWidth < 500 ? 'end' : 'middle')
+                .attr('dx', innerWidth < 500 ? '-0.8em' : '0')
+                .attr('dy', innerWidth < 500 ? '0.15em' : '0.71em')
+                .attr('transform', innerWidth < 500 ? 'rotate(-45)' : 'rotate(0)');
 
             g.append('text')
                 .attr('x', innerWidth / 2)
@@ -1266,6 +1273,15 @@
         updateSliderDisplay();
         updateResults();
         updateChart();
+
+        // Handle window resize for responsive chart
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                updateChart();
+            }, 250);
+        });
     </script>
 </body>
 </html>
