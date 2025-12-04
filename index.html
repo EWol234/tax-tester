@@ -657,21 +657,46 @@
             if (capitalGains <= 0) return '<div class="breakdown-row"><strong>No capital gains</strong></div>';
 
             const taxableOrdinaryIncome = Math.max(0, ordinaryIncome - federalDeduction);
-            const totalIncome = taxableOrdinaryIncome + capitalGains;
+            const ltcgBrackets = TAX_DATA[year].federal.ltcgBrackets;
 
-            // Find rate
-            let rate = 0;
-            for (const bracket of TAX_DATA[year].federal.ltcgBrackets) {
-                rate = bracket.rate;
-                if (totalIncome <= bracket.max) break;
+            let html = `<div class="breakdown-row"><strong>Capital Gains:</strong> <span>${formatCurrency(capitalGains)}</span></div>`;
+            html += `<div class="breakdown-row"><strong>Taxable Ordinary Income (stacks first):</strong> <span>${formatCurrency(taxableOrdinaryIncome)}</span></div>`;
+
+            // Show per-bracket breakdown (mirroring calculateLTCGTax logic)
+            html += `<div class="bracket-list" style="margin-top: 8px;">`;
+            let remainingGains = capitalGains;
+            let previousMax = 0;
+            let totalTax = 0;
+
+            for (const bracket of ltcgBrackets) {
+                const bracketStart = Math.max(previousMax, taxableOrdinaryIncome);
+                const bracketEnd = bracket.max;
+
+                if (bracketStart >= bracketEnd) {
+                    previousMax = bracket.max;
+                    continue;
+                }
+
+                const roomInBracket = bracketEnd - bracketStart;
+                const gainsInBracket = Math.min(remainingGains, roomInBracket);
+
+                if (gainsInBracket > 0) {
+                    const tax = gainsInBracket * bracket.rate;
+                    totalTax += tax;
+                    const ratePercent = (bracket.rate * 100).toFixed(0);
+                    html += `<div class="breakdown-row">`;
+                    html += `<span>${formatCurrency(gainsInBracket)} @ ${ratePercent}%:</span>`;
+                    html += `<span>${formatCurrency(tax)}</span>`;
+                    html += `</div>`;
+                }
+
+                remainingGains -= gainsInBracket;
+                if (remainingGains <= 0) break;
+                previousMax = bracket.max;
             }
 
-            const ratePercent = (rate * 100).toFixed(0);
-            let html = `<div class="breakdown-row"><strong>Capital Gains:</strong> <span>${formatCurrency(capitalGains)}</span></div>`;
-            html += `<div class="breakdown-row"><strong>Taxable Ordinary Income:</strong> <span>${formatCurrency(taxableOrdinaryIncome)}</span></div>`;
-            html += `<div class="breakdown-row"><strong>Total Income:</strong> <span>${formatCurrency(totalIncome)}</span></div>`;
-            html += `<div class="breakdown-row"><strong>Rate Applied:</strong> <span>${ratePercent}%</span></div>`;
-            html += `<div class="breakdown-row"><strong>LTCG Tax:</strong> <span>${formatCurrency(capitalGains * rate)}</span></div>`;
+            html += `</div>`;
+            html += `<div class="breakdown-row" style="margin-top: 8px; border-top: 1px solid #ddd; padding-top: 8px;"><strong>Total LTCG Tax:</strong> <span>${formatCurrency(totalTax)}</span></div>`;
             return html;
         }
 
