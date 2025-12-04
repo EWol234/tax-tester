@@ -457,7 +457,7 @@
         const TAX_DATA = {
             2025: {
                 federal: {
-                    standardDeduction: 14600,
+                    standardDeduction: 15750, // IRS 2025 single filer (OBBB)
                     brackets: [
                         { max: 11600, rate: 0.10 },
                         { max: 47150, rate: 0.12 },
@@ -492,7 +492,7 @@
             },
             2026: {
                 federal: {
-                    standardDeduction: 15038, // ~3% inflation
+                    standardDeduction: 16100, // IRS 2026 single filer
                     brackets: [
                         { max: 11948, rate: 0.10 },
                         { max: 48565, rate: 0.12 },
@@ -509,7 +509,7 @@
                     ]
                 },
                 california: {
-                    standardDeduction: 5524, // ~3% inflation
+                    standardDeduction: 5540, // CA 2026
                     mentalHealthThreshold: 1030000,
                     mentalHealthRate: 0.01,
                     brackets: [
