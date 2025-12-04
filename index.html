@@ -549,23 +549,40 @@
             return calculateProgressiveTax(taxableIncome, TAX_DATA[year].federal.brackets);
         }
 
-        // Federal LTCG Tax (rate based on total income)
+        // Federal LTCG Tax (marginal: ordinary income stacks first, then LTCG on top)
         function calculateLTCGTax(capitalGains, ordinaryIncome, federalDeduction, year) {
             if (capitalGains <= 0) return 0;
 
             const taxableOrdinaryIncome = Math.max(0, ordinaryIncome - federalDeduction);
-            const totalIncome = taxableOrdinaryIncome + capitalGains;
+            const ltcgBrackets = TAX_DATA[year].federal.ltcgBrackets;
 
-            // Find rate based on total income
-            let rate = 0;
-            for (const bracket of TAX_DATA[year].federal.ltcgBrackets) {
-                rate = bracket.rate;
-                if (totalIncome <= bracket.max) {
-                    break;
+            let tax = 0;
+            let remainingGains = capitalGains;
+            let previousMax = 0;
+
+            for (const bracket of ltcgBrackets) {
+                // Bracket starts after ordinary income or previous bracket max
+                const bracketStart = Math.max(previousMax, taxableOrdinaryIncome);
+                const bracketEnd = bracket.max;
+
+                if (bracketStart >= bracketEnd) {
+                    // Ordinary income already past this bracket
+                    previousMax = bracket.max;
+                    continue;
                 }
+
+                // How much LTCG fits in remaining bracket space?
+                const roomInBracket = bracketEnd - bracketStart;
+                const gainsInBracket = Math.min(remainingGains, roomInBracket);
+
+                tax += gainsInBracket * bracket.rate;
+                remainingGains -= gainsInBracket;
+
+                if (remainingGains <= 0) break;
+                previousMax = bracket.max;
             }
 
-            return capitalGains * rate;
+            return tax;
         }
 
         // California State Tax
